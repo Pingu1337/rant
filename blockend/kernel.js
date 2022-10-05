@@ -220,7 +220,6 @@ export default class Kernel extends SimpleKernel {
 
   async encryptMessage (secret) {
     const encrypted = await encrypt(get(this._draft).text, secret)
-    console.info('encrypted: ', encrypted)
     this._w.setText(encrypted)
     this._w.setEncrypted(true)
   }
