@@ -1,78 +1,85 @@
 import test from 'tape'
 import { MemoryLevel } from 'memory-level'
 import Kernel from '../blockend/kernel.js'
-// import { encrypt, decrypt } from '../blockend/picocard.js'
 import { get } from 'piconuro'
+import { decrypt } from '../frontend/encryption.js'
 
 export async function encryptionTests () {
-  test('Encrypt Rant', async t => {
-    const message = 'sample message'
-    const k = new Kernel(makeDB())
-    await k.boot()
-    const $secret = '1337'
-    k.setSecret($secret)
-    t.notOk(get(k.$rant()).id) // current -> undefined
-    // Create new Rant
-    await k.checkout(null) // makes new.
-    let rant = get(k.$rant())
-    t.equal(rant.id, 'draft:0')
-    t.equal(rant.state, 'draft')
-    await k.setText(message)
-    await k.setTheme(1)
-    // set encryption level 1 (KeyPad)
-    await k.setEncryption(1)
-    // set secret
-    await k.setSecret($secret)
+  /* use this to test only the encryption */
+  // await testEncrypt(message, $secret, false)
 
-    rant = get(k.$rant())
-    t.equal(rant.text, message)
-    t.equal(rant.theme, 1)
-    t.equal(rant.encryption, 1)
-    const id = await k.commit()
-    rant = get(k.$rant())
-    t.equal(rant.state, 'signed')
-    t.ok(rant.author)
-    t.equal(get(k.$rants()).length, 1)
-    const url = await k.pickle()
-    t.ok(url)
+  /* use this to test encryption + decryption */
+  // await testEncrypt(message, $secret, true)
 
-    const k2 = new Kernel(makeDB())
-    await k2.boot()
-    // set secret
-    await k2.setSecret($secret)
-    // When loading from hash
-    const impId = await k2.import(`https://xor.cry/${url}`) // dispatch(Feed.from(hash))
-    t.ok(id.equals(impId))
-    rant = get(k2.$rant()) // imported
-    console.log(rant.decrypted)
-    t.ok(rant.decrypted, 'Not encrypted')
-
-    t.equal(rant.secret, '1337')
-
-    t.equal(rant.state, 'signed')
-    t.equal(rant.text, message)
-    console.log('decryptedMessage: ', rant.text)
-    // Enjoy rant.text
+  test('Decryption Loop', async t => {
+    const message = 'sample message' // The message to encrypt
+    const usedPINs = []
+    for (let i = 0; i < 100; i++) {
+      const $secret = mockPin(1000, 99999).toString() // Generate a random 4-digit PIN number
+      await testEncrypt(message, $secret, true, t)
+      usedPINs.push($secret)
+    }
+    t.equal(message, 'sample message')
+    console.info('LOOP DONE')
+    console.info('used PIN numbers: ', usedPINs)
+    console.info('combinations tried: ', usedPINs.length)
   })
 }
 
-/**
- * Testing basic Encryption/Decryption
- */
+async function testEncrypt (message, secret, decryption, t) {
+  console.log('Secret: ', secret)
+  const k = new Kernel(makeDB())
+  await k.boot()
 
-// test('Basic Encrypt/Decrypt', async t => {
-//   const message = '# Hack\nworld is not hackable\nit is soft'
-//   const secret = '1337'
+  t.notOk(get(k.$rant()).id) // current -> undefined
+  // Create new Rant
+  await k.checkout(null) // makes new.
+  let rant = get(k.$rant())
+  t.equal(rant.id, 'draft:0')
+  t.equal(rant.state, 'draft')
+  await k.setText(message)
+  await k.setTheme(1)
+  // set encryption level 1 (KeyPad)
+  await k.setEncryption(1)
+  // set secret
+  await k.setSecret(secret)
+  await k.encryptMessage(secret)
+  rant = get(k.$rant())
+  t.notEqual(rant.text, message)
+  t.equal(rant.theme, 1)
+  t.equal(rant.encryption, 1)
+  await k.commit()
+  rant = get(k.$rant())
+  t.equal(rant.state, 'signed')
+  t.ok(rant.author)
+  t.equal(get(k.$rants()).length, 1)
+  const url = await k.pickle()
+  t.ok(url)
+  if (decryption) {
+    const k2 = new Kernel(makeDB())
+    await k2.boot()
+    // When loading from hash
+    await k2.import(`https://xor.cry/${url}`) // dispatch(Feed.from(hash))
+    const rant = get(k2.$rant()) // imported
+    t.ok(rant.decrypted, 'Not encrypted')
 
-//   const encrypted = encrypt(message, secret)
-//   console.log('Encrypted: ', encrypted)
+    /* simulate the decrypt function in 'keypad-dialog.js */
+    const decrypted = await decryptMessage(rant.text, secret)
+    t.equal(rant.state, 'signed')
+    t.equal(decrypted, message)
+    console.log('decrypted: ', decrypted)
+  }
+}
 
-//   const decryptTimeout = new Date().setSeconds(new Date().getSeconds() + 10)
+async function decryptMessage (message, secret) {
+  const decrypted = await decrypt(message, secret)
+  return decrypted
+}
 
-//   const decrypted = await decrypt(encrypted, secret, decryptTimeout)
-//   console.log('Decrypted: ', decrypted)
-//   t.equal(decrypted, message)
-// })
+/* Function used to generate random 4-digit PIN numbers */
+function mockPin (min, max) {
+  return Math.floor(Math.random() * (max - min + 1) + min)
+}
 
 function makeDB () {
   return new MemoryLevel('rant.lvl', { keyEncoding: 'buffer', valueEncoding: 'buffer' })

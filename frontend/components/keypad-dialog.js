@@ -1,5 +1,5 @@
 import Tonic from '@socketsupply/tonic/index.esm.js'
-import './keypad-dialog.css'
+// import './keypad-dialog.css'
 import { write, next, get } from 'piconuro'
 import { nEl } from '../surgeon.js'
 import { decrypt } from '../encryption.js'
