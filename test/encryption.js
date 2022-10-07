@@ -9,15 +9,15 @@ const failedPins = []
 export async function encryptionTests () {
   test('Encryption/Decryption tests', async t => {
     const message = 'sample message' // The message to encrypts
-
+    t.skip()
     /** loop tests with different pin codes */
     const usedPINs = []
 
-    for (let i = 0; i < 100; i++) {
-      const $secret = mockPin(1000, 9999999999).toString() // Generate a random 4-digit PIN number
-      await testEncrypt(message, $secret, true, true, t)
-      usedPINs.push($secret)
-    }
+    // for (let i = 0; i < 100; i++) {
+    //   const $secret = mockPin(1000, 9999999999).toString() // Generate a random 4-digit PIN number
+    //   await testEncrypt(message, $secret, true, true, t)
+    //   usedPINs.push($secret)
+    // }
     // usedPINs.push($secret)
 
     console.info('LOOP DONE')

@@ -1,5 +1,7 @@
 import CryptoJS from 'crypto-js'
 
+import scrypt from 'scrypt-js'
+
 export async function encrypt (message, secret) {
   const key = await crypt(secret)
   const ciphertext = CryptoJS.AES.encrypt(message, key).toString()
@@ -21,4 +23,12 @@ export async function decrypt (encoded, secret) {
 
 async function crypt (input) {
   return Buffer.from(input).toString('base64')
+}
+
+/**
+ * scrypt-js
+ */
+
+export function scryptEncrypt (message, secret) {
+
 }
