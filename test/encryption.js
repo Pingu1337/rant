@@ -4,29 +4,26 @@ import Kernel from '../blockend/kernel.js'
 import { get } from 'piconuro'
 import { decrypt } from '../frontend/encryption.js'
 
+const failedPins = []
+
 export async function encryptionTests () {
   test('Encryption/Decryption tests', async t => {
-    const message = 'sample message' // The message to encrypt
-
-    /* use this to test only the encryption */
-    // const $secret = '1337'
-    // await testEncrypt(message, $secret, false, t)
-
-    /* use this to test encryption + decryption */
-    const $secret = '666666'
-    await testEncrypt(message, $secret, true, true, t)
+    const message = 'sample message' // The message to encrypts
 
     /** loop tests with different pin codes */
-    // const usedPINs = []
-    // for (let i = 0; i < 500; i++) {
-    //   const $secret = mockPin(1000, 99999).toString() // Generate a random 4-digit PIN number
-    //   await testEncrypt(message, $secret, true, t)
-    //   usedPINs.push($secret)
-    // }
+    const usedPINs = []
+
+    for (let i = 0; i < 100; i++) {
+      const $secret = mockPin(1000, 9999999999).toString() // Generate a random 4-digit PIN number
+      await testEncrypt(message, $secret, true, true, t)
+      usedPINs.push($secret)
+    }
     // usedPINs.push($secret)
-    // console.info('LOOP DONE')
-    // console.info('used PIN numbers: ', usedPINs)
-    // console.info('combinations tried: ', usedPINs.length)
+
+    console.info('LOOP DONE')
+    console.info('used PIN numbers: ', usedPINs)
+    console.info(`faulty PIN numbers [${failedPins.length}]: `, failedPins)
+    console.info('combinations tried: ', usedPINs.length)
     t.end()
   })
 }
@@ -93,7 +90,13 @@ async function testEncrypt (message, secret, decryption, testWrongPin, t) {
       await decryptMessage(rant.text, incorrectSecret)
     } catch (e) {
       logError(e.message, [])
+      t.fail(e.message)
+      failedPins.push(secret)
     }
+
+    await decryptMessage(rant.text, incorrectSecret)
+      .then(data => console.log(data))
+      .catch(e => t.fail(e))
 
     t.notEqual(decrypted, message)
   }
