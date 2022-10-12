@@ -20,6 +20,10 @@ import { isDraftID, isRantID, isEqualID, btok } from './util.js'
 import Notebook from './slices/notebook.js'
 import { encrypt } from '../frontend/encryption.js'
 
+export {
+  isDraftID, isRantID, isEqualID, btok
+}
+
 // Backdoor my own shit.
 // SimpleKernel.decodeBlock = unpack
 SimpleKernel.encodeBlock = (type, seq, data) => pack({ type, ...data })
