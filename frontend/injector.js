@@ -2,8 +2,17 @@
  * Manipulated during build.
  * @returns JSON object with base64-encoded static file content
  */
+
 const styles = `__SCOPED_CSS__
 `
+
+const emojis = `__EMOJI_DATA__
+`
+
+export function getEmojis () {
+  JSON.parse(emojis)
+  return emojis
+}
 
 /**
  * ```js

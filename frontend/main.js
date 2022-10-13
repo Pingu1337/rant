@@ -32,6 +32,7 @@ import './components/message-preview.js'
 import './components/qr-code.js'
 import './components/keypad-dialog.js'
 import './components/discover-page.js'
+import { mountEmojiPicker, unMountEmojiPicker } from './components/emoji-picker.js'
 /* #if _MERMAID */ // TODO: https://github.com/aMarCruz/rollup-plugin-jscc
 import './components/mermaid-graph.js'
 /* #endif */
@@ -170,6 +171,8 @@ async function main () {
   /* On Route change  TODO: move to component */
   mute(gate($route), async ({ path, id, q }) => {
     // console.info('Route Change', path, id, q)
+    /* Unmount EmojiPicker if not on route #edit */
+    if (path !== 'edit')unMountEmojiPicker()
     switch (path) {
       case 'r':
       case 'show': {
@@ -188,6 +191,8 @@ async function main () {
 
       case 'e':
       case 'edit':
+        /** small emoji picker mount/unmount */
+        mountEmojiPicker()
         if (id === 'new') {
           const [id] = await kernel.checkout(null)
           setMode(true)

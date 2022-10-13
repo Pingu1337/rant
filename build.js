@@ -4,13 +4,14 @@ import { replace } from 'esbuild-plugin-replace'
 import stdLibBrowser from 'node-stdlib-browser'
 import { readFileSync, readdirSync } from 'node:fs'
 import { execSync } from 'node:child_process'
+import { unzipSync } from 'node:zlib'
 
 /**
  *
  * @returns encoded static file content as an object
  */
 async function loadStaticFileData () {
-  const staticData = await readStaticFiles('static_files/')
+  const staticData = await readStaticFiles('static_files/css/')
   return JSON.stringify(staticData)
 }
 
@@ -49,7 +50,8 @@ const config = {
       __ENV__: `${production ? 'production' : 'dev'}`,
       __VERSION__: `${version}`,
       __COMMIT__: `${commit}`,
-      __SCOPED_CSS__: `${await loadStaticFileData()}`
+      __SCOPED_CSS__: `${await loadStaticFileData()}`,
+      __EMOJI_DATA__: `${await loadEmojiData()}`
     })
   ]
 }
@@ -91,7 +93,7 @@ async function build () {
     process.on('exit', beforeQuit)
   }
 }
-build()
+await build()
 
 /**
  *
@@ -106,4 +108,10 @@ async function readStaticFiles (dir) {
     staticData[filename] = Buffer.from(content).toString('base64')
   })
   return staticData
+}
+
+async function loadEmojiData () {
+  const emojiGz = readFileSync('static_files/emojis/emojis.gz')
+  const emojiData = unzipSync(emojiGz)
+  return emojiData
 }
